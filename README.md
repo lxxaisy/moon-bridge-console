@@ -50,7 +50,9 @@ go run ./cmd/moonbridge -config <generated-config> -addr <addr>
 6. Start Moon Bridge from the console.
 7. Sync Codex configuration.
 8. Run compatibility diagnostics.
-9. Use Codex App with the generated Moon Bridge provider.
+9. Run the Agent Benchmark for candidate default models.
+10. Open **模型推荐**, set the best validated route as default, and sync Codex again.
+11. Use Codex App with the generated Moon Bridge provider.
 
 ## Xiaomi Token Plan
 
@@ -108,6 +110,19 @@ Benchmark tiers:
 - `not_ready`: model is not suitable as the default coding route
 
 Use `coding_ready` as the stronger signal for choosing the default Codex coding model. A model can pass basic compatibility diagnostics and still fail this benchmark.
+
+## Model Recommendations
+
+The **模型推荐** tab persists recent diagnostics and benchmark results per route alias. It combines both signals into a simple operational recommendation:
+
+- `推荐默认`: diagnostics are `agent_ready` and benchmark is `coding_ready`
+- `适合代码任务`: benchmark is `coding_ready`, but diagnostics still need a closer look
+- `工具链需谨慎`: some tool behavior works, but it should not be promoted blindly
+- `仅适合文本`: useful for simple prompts, risky for Codex file editing
+- `未验证`: run diagnostics and benchmark before deciding
+- `不建议默认`: avoid using this route as the default Codex model
+
+After setting a route as default from this tab, sync Codex configuration again so Codex App picks up the selected default model.
 
 ## Upstream Compatibility
 

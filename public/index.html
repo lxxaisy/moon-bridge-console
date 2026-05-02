@@ -18,6 +18,7 @@
         </div>
         <nav>
           <button class="tab active" data-tab="overview" type="button">概览</button>
+          <button class="tab" data-tab="recommendations" type="button">模型推荐</button>
           <button class="tab" data-tab="providers" type="button">Provider</button>
           <button class="tab" data-tab="routes" type="button">模型路由</button>
           <button class="tab" data-tab="codex" type="button">Codex 同步</button>
@@ -96,6 +97,18 @@
           </div>
           <pre id="capabilityNotes" class="notes"></pre>
           <pre id="logs" class="log"></pre>
+        </section>
+
+        <section id="recommendations" class="panel">
+          <div class="section-head">
+            <div>
+              <h2>模型推荐</h2>
+              <p class="muted">基于兼容诊断和 Agent 基准结果选择默认 coding 模型。</p>
+            </div>
+            <button id="refreshRecommendationsButton" type="button">刷新推荐</button>
+          </div>
+          <div id="recommendationSummary" class="callout"></div>
+          <div id="recommendationList" class="list"></div>
         </section>
 
         <section id="providers" class="panel">

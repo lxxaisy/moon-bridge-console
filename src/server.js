@@ -16,6 +16,7 @@ import {
 } from "./config.js";
 import { runAgentBenchmark } from "./benchmark.js";
 import { fetchMetrics, runDiagnostics, testProvider } from "./diagnostics.js";
+import { recommendationsView, recordEvaluation, setDefaultModel } from "./recommendations.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, "..", "public");
@@ -61,6 +62,16 @@ async function route(req, res) {
       const configPath = await writeMoonBridgeConfig(state);
       return json(res, { ok: true, configPath, config: configView(state) });
     }
+    if (url.pathname === "/api/recommendations" && req.method === "GET") {
+      return json(res, recommendationsView(state));
+    }
+    if (url.pathname === "/api/default-model" && req.method === "POST") {
+      const body = await readJSON(req);
+      state = setDefaultModel(state, body.alias);
+      await saveState(state, statePath);
+      const configPath = await writeMoonBridgeConfig(state);
+      return json(res, { ok: true, configPath, config: configView(state), recommendations: recommendationsView(state) });
+    }
     if (url.pathname === "/api/provider/template" && req.method === "POST") {
       const body = await readJSON(req);
       const provider = makeProviderFromTemplate(body.templateID, body.apiKey ?? "");
@@ -90,19 +101,29 @@ async function route(req, res) {
     }
     if (url.pathname === "/api/diagnostics/run" && req.method === "POST") {
       const body = await readJSON(req);
-      return json(res, await runDiagnostics({
+      const model = body.model || state.config.provider.default_model;
+      const result = await runDiagnostics({
         baseURL: body.baseURL || state.baseURL,
-        model: body.model || state.config.provider.default_model,
+        model,
         authToken: state.config.server?.auth_token ?? ""
-      }));
+      });
+      result.completedAt = new Date().toISOString();
+      state = recordEvaluation(state, model, "diagnostics", result);
+      await saveState(state, statePath);
+      return json(res, result);
     }
     if (url.pathname === "/api/benchmark/run" && req.method === "POST") {
       const body = await readJSON(req);
-      return json(res, await runAgentBenchmark({
+      const model = body.model || state.config.provider.default_model;
+      const result = await runAgentBenchmark({
         baseURL: body.baseURL || state.baseURL,
-        model: body.model || state.config.provider.default_model,
+        model,
         authToken: state.config.server?.auth_token ?? ""
-      }));
+      });
+      result.completedAt = new Date().toISOString();
+      state = recordEvaluation(state, model, "benchmark", result);
+      await saveState(state, statePath);
+      return json(res, result);
     }
     if (url.pathname === "/api/metrics" && req.method === "GET") {
       return json(res, await fetchMetrics({

@@ -24,6 +24,7 @@ const DEFAULT_STATE = {
   configPath: DEFAULT_CONFIG_PATH,
   codexHome: DEFAULT_CODEX_HOME,
   baseURL: `http://${DEFAULT_ADDR}/v1`,
+  evaluations: {},
   config: {
     mode: "Transform",
     server: {

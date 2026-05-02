@@ -48,6 +48,12 @@ button:hover {
   transform: translateY(-1px);
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
 button.primary {
   background: var(--accent);
   border-color: var(--accent);
@@ -279,6 +285,19 @@ main {
   margin: 0;
 }
 
+.small {
+  font-size: 12px;
+}
+
+.callout {
+  border: 1px solid #b9d8d3;
+  border-radius: 8px;
+  background: #eef8f6;
+  color: #134e49;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+}
+
 .model-list,
 .route-row {
   display: grid;
@@ -361,6 +380,14 @@ main {
 .profile strong {
   display: block;
   font-size: 15px;
+}
+
+.compact-profile {
+  margin-bottom: 8px;
+}
+
+.recommendation .badge {
+  white-space: nowrap;
 }
 
 .table-wrap {

@@ -2,7 +2,8 @@ const $ = (id) => document.getElementById(id);
 
 const state = {
   config: null,
-  status: null
+  status: null,
+  recommendations: null
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -34,13 +35,16 @@ function bindActions() {
   $("runDiagnosticsButton").addEventListener("click", runDiagnostics);
   $("runBenchmarkButton").addEventListener("click", runBenchmark);
   $("loadMetricsButton").addEventListener("click", loadMetrics);
+  $("refreshRecommendationsButton").addEventListener("click", refreshRecommendations);
 }
 
 async function refreshAll() {
   state.status = await getJSON("/api/status");
   state.config = await getJSON("/api/config");
+  state.recommendations = await getJSON("/api/recommendations");
   renderConfig();
   renderStatus();
+  renderRecommendations();
   await refreshLogs();
 }
 
@@ -91,6 +95,43 @@ function renderStatus() {
   const capabilities = state.status?.moonBridge?.capabilities ?? {};
   $("capabilityState").textContent = capabilities.managementAPI ? "v5 API 可用" : "v4 YAML 模式";
   $("capabilityNotes").textContent = (capabilities.notes ?? []).join("\n");
+}
+
+function renderRecommendations() {
+  const payload = state.recommendations ?? { items: [] };
+  const recommended = payload.recommendedDefault || "";
+  $("recommendationSummary").innerHTML = recommended
+    ? `推荐默认模型：<strong>${escapeHTML(recommended)}</strong>。确认后可一键设为默认，并重新同步 Codex。`
+    : "还没有足够结果。先在“兼容诊断”和“Agent 基准”分别运行目标模型。";
+  $("recommendationList").innerHTML = "";
+  for (const item of payload.items ?? []) {
+    const row = document.createElement("article");
+    row.className = "item recommendation";
+    row.innerHTML = `
+      <div class="item-head">
+        <div>
+          <h3>${escapeHTML(item.alias)} ${item.isDefault ? "<span class=\"badge good\">当前默认</span>" : ""}</h3>
+          <p class="muted">${escapeHTML(item.provider)} / ${escapeHTML(item.model)}</p>
+        </div>
+        <div class="actions">
+          <span class="badge ${recommendationBadgeClass(item.category)}">${escapeHTML(item.label)}</span>
+          <span class="badge">评分 ${Number(item.score ?? 0)}</span>
+          <button type="button" data-action="set-default-model" data-alias="${escapeAttr(item.alias)}"${item.isDefault ? " disabled" : ""}>设为默认</button>
+        </div>
+      </div>
+      <div class="profile compact-profile">
+        <div><span>兼容诊断</span><strong>${escapeHTML(item.diagnostics?.label ?? "未诊断")}</strong></div>
+        <div><span>诊断评分</span><strong>${Number(item.diagnostics?.score ?? 0)}</strong></div>
+        <div><span>Agent 基准</span><strong>${escapeHTML(item.benchmark?.label ?? "未运行")}</strong></div>
+        <div><span>基准评分</span><strong>${Number(item.benchmark?.score ?? 0)}</strong></div>
+      </div>
+      <p class="muted small">${item.updatedAt ? `最近验证：${escapeHTML(item.updatedAt)}` : "尚未验证"}</p>
+    `;
+    $("recommendationList").appendChild(row);
+  }
+  $("recommendationList").querySelectorAll("button[data-action='set-default-model']").forEach((button) => {
+    button.addEventListener("click", setRecommendedDefault);
+  });
 }
 
 function renderProviders() {
@@ -261,7 +302,9 @@ async function saveConfig() {
   collectConfig();
   const result = await putJSON("/api/config", state.config);
   state.config = result.config;
+  state.recommendations = await getJSON("/api/recommendations");
   renderConfig();
+  renderRecommendations();
   toast(`已写入 ${result.configPath}`);
 }
 
@@ -329,6 +372,7 @@ async function runDiagnostics() {
   advice.innerHTML = `<h3>建议</h3><ul>${(result.recommendations ?? []).map((text) => `<li>${escapeHTML(text)}</li>`).join("")}</ul>`;
   $("diagnosticsList").appendChild(advice);
   toast("诊断完成");
+  await refreshRecommendations();
 }
 
 function renderDiagnosticsProfile(profile) {
@@ -404,6 +448,27 @@ async function runBenchmark() {
     ...(result.recommendations ?? [])
   ].join("\n");
   toast("Agent 基准完成");
+  await refreshRecommendations();
+}
+
+async function refreshRecommendations() {
+  state.recommendations = await getJSON("/api/recommendations");
+  state.config = await getJSON("/api/config");
+  renderRouteSelects();
+  renderStatus();
+  renderRecommendations();
+}
+
+async function setRecommendedDefault(event) {
+  collectConfig();
+  const alias = event.currentTarget.dataset.alias;
+  const result = await postJSON("/api/default-model", { alias });
+  state.config = result.config;
+  state.recommendations = result.recommendations;
+  renderConfig();
+  renderStatus();
+  renderRecommendations();
+  toast(`默认模型已切换为 ${alias}，需要同步 Codex 后生效`);
 }
 
 async function refreshLogs() {
@@ -508,6 +573,16 @@ function toast(message) {
   $("toast").textContent = message;
   $("toast").classList.add("show");
   setTimeout(() => $("toast").classList.remove("show"), 2600);
+}
+
+function recommendationBadgeClass(category) {
+  if (category === "recommended_default" || category === "coding_ready") {
+    return "good";
+  }
+  if (category === "tool_loop_only" || category === "text_only" || category === "unverified") {
+    return "warn";
+  }
+  return "bad";
 }
 
 function escapeHTML(value) {
