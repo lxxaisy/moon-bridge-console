@@ -302,7 +302,8 @@ main {
 
 .result,
 .log,
-.mini-result {
+.mini-result,
+.notes {
   width: 100%;
   min-height: 80px;
   overflow: auto;
@@ -318,6 +319,13 @@ main {
 .log {
   min-height: 180px;
   max-height: 320px;
+}
+
+.notes {
+  min-height: 52px;
+  margin: 0 0 14px;
+  background: #f9fbfb;
+  color: var(--muted);
 }
 
 .score {

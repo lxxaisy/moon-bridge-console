@@ -91,6 +91,12 @@ BASE_URL=http://127.0.0.1:38440/v1 MODEL=xiaomi npm run diagnose
 
 For best Codex App results, make an `agent_ready` model your default route. Keep weaker models as explicit secondary aliases instead of the default model.
 
+## Upstream Compatibility
+
+The console probes Moon Bridge for the dev/v5 management API at `/api/v1/status`. Current stable usage still targets Moon Bridge main/v4 YAML. If Moon Bridge promotes the v5 config/API redesign to `main`, the console should add a v5 config backend instead of replacing the current v4 path abruptly.
+
+Tracking notes are kept in [docs/moon-bridge-upstream.md](docs/moon-bridge-upstream.md).
+
 ## Agent Compatibility Strategy
 
 The console reduces model differences by shaping configuration and diagnostics, not by changing Moon Bridge's core protocol conversion:

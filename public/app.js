@@ -85,6 +85,9 @@ function renderStatus() {
   $("processState").textContent = running ? `运行中 PID ${state.status.moonBridge.pid}` : "未运行";
   $("modelCount").textContent = health.modelCount ?? "-";
   $("configPathText").textContent = state.config.configPath ?? "-";
+  const capabilities = state.status?.moonBridge?.capabilities ?? {};
+  $("capabilityState").textContent = capabilities.managementAPI ? "v5 API 可用" : "v4 YAML 模式";
+  $("capabilityNotes").textContent = (capabilities.notes ?? []).join("\n");
 }
 
 function renderProviders() {

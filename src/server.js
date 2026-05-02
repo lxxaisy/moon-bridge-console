@@ -113,6 +113,7 @@ async function route(req, res) {
 
 async function statusPayload() {
   const health = await moonBridgeHealth();
+  const capabilities = await moonBridgeCapabilities();
   return {
     console: {
       statePath,
@@ -123,7 +124,8 @@ async function statusPayload() {
       pid: moonBridge.process?.pid ?? null,
       startedAt: moonBridge.startedAt,
       exit: moonBridge.exit,
-      health
+      health,
+      capabilities
     },
     config: configView(state)
   };
@@ -198,6 +200,42 @@ async function moonBridgeHealth() {
   } catch (error) {
     return { ok: false, message: error.message || String(error) };
   }
+}
+
+async function moonBridgeCapabilities() {
+  const baseURL = state.baseURL.replace(/\/v1\/?$/, "").replace(/\/+$/, "");
+  const headers = state.config.server?.auth_token ? { authorization: `Bearer ${state.config.server.auth_token}` } : {};
+  const capabilities = {
+    configFormat: "v4",
+    managementAPI: false,
+    managementBaseURL: `${baseURL}/api/v1`,
+    notes: []
+  };
+  try {
+    const response = await fetch(`${baseURL}/api/v1/status`, {
+      headers,
+      signal: AbortSignal.timeout(2000)
+    });
+    if (response.ok) {
+      const payload = await response.json();
+      capabilities.configFormat = "v5";
+      capabilities.managementAPI = true;
+      capabilities.version = payload.version ?? "";
+      capabilities.providerCount = payload.provider_count ?? 0;
+      capabilities.routeCount = payload.route_count ?? 0;
+      capabilities.notes.push("Moon Bridge dev/v5 management API is available.");
+    } else if (response.status === 404) {
+      capabilities.notes.push("Management API not detected; using v4 YAML workflow.");
+    } else {
+      capabilities.notes.push(`Management API probe returned HTTP ${response.status}.`);
+    }
+  } catch (error) {
+    capabilities.notes.push(`Management API probe failed: ${error.message || String(error)}`);
+  }
+  if (capabilities.configFormat === "v4") {
+    capabilities.notes.push("If Moon Bridge dev/v5 is promoted to main, this console should switch to top-level providers/models/routes or /api/v1 changes.");
+  }
+  return capabilities;
 }
 
 function moonBridgeCommand() {
