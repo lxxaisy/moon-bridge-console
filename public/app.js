@@ -32,6 +32,7 @@ function bindActions() {
   $("addRouteButton").addEventListener("click", addRoute);
   $("syncCodexButton").addEventListener("click", syncCodex);
   $("runDiagnosticsButton").addEventListener("click", runDiagnostics);
+  $("runBenchmarkButton").addEventListener("click", runBenchmark);
   $("loadMetricsButton").addEventListener("click", loadMetrics);
 }
 
@@ -54,6 +55,7 @@ function renderConfig() {
   $("defaultMaxTokens").value = cfg.defaultMaxTokens ?? 0;
   $("codexHome").value = cfg.codexHome ?? "";
   $("diagnosticsBaseURL").value = cfg.baseURL ?? "";
+  $("benchmarkBaseURL").value = cfg.baseURL ?? "";
   renderTemplateSelect();
   renderRouteSelects();
   renderProviders();
@@ -68,12 +70,13 @@ function renderTemplateSelect() {
 
 function renderRouteSelects() {
   const routes = state.config.routes ?? [];
-  for (const id of ["defaultModel", "codexModel", "diagnosticsModel"]) {
+  for (const id of ["defaultModel", "codexModel", "diagnosticsModel", "benchmarkModel"]) {
     $(id).innerHTML = routes.map((route) => `<option value="${escapeHTML(route.alias)}">${escapeHTML(route.alias)}</option>`).join("");
   }
   $("defaultModel").value = state.config.defaultModel ?? "";
   $("codexModel").value = state.config.defaultModel ?? "";
   $("diagnosticsModel").value = state.config.defaultModel ?? "";
+  $("benchmarkModel").value = state.config.defaultModel ?? "";
 }
 
 function renderStatus() {
@@ -364,6 +367,43 @@ async function loadMetrics() {
     $("metricsTable").appendChild(row);
   }
   toast(payload.enabled ? "指标已加载" : payload.message || "metrics 未启用");
+}
+
+async function runBenchmark() {
+  $("benchmarkScore").textContent = "基准运行中...";
+  $("benchmarkProfile").innerHTML = "";
+  $("benchmarkTable").innerHTML = "";
+  $("benchmarkWorkspace").textContent = "";
+  const result = await postJSON("/api/benchmark/run", {
+    model: $("benchmarkModel").value,
+    baseURL: $("benchmarkBaseURL").value
+  });
+  $("benchmarkScore").textContent = `Agent 基准 ${result.score}/100 · ${result.label} · ${result.duration_ms}ms`;
+  $("benchmarkProfile").innerHTML = `
+    <div><span>等级</span><strong>${escapeHTML(result.tier)}</strong></div>
+    <div><span>工具调用</span><strong>${Number(result.summary?.tool_calls ?? 0)}</strong></div>
+    <div><span>写文件</span><strong>${Number(result.summary?.write_file_calls ?? 0)}</strong></div>
+    <div><span>测试</span><strong>${result.summary?.tests_pass ? "通过" : "失败"}</strong></div>
+  `;
+  for (const step of result.steps ?? []) {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${Number(step.turn ?? 0)}</td>
+      <td>${escapeHTML(step.type ?? "")}</td>
+      <td>${escapeHTML(step.tool ?? "")}</td>
+      <td><span class="badge ${step.ok ? "good" : "bad"}">${step.ok ? "通过" : "失败"}</span></td>
+      <td><pre class="table-json">${escapeHTML(JSON.stringify(step.output ?? step.message ?? step.details ?? {}, null, 2))}</pre></td>
+    `;
+    $("benchmarkTable").appendChild(row);
+  }
+  $("benchmarkWorkspace").textContent = [
+    "最终工作区",
+    JSON.stringify(result.workspace ?? {}, null, 2),
+    "",
+    "建议",
+    ...(result.recommendations ?? [])
+  ].join("\n");
+  toast("Agent 基准完成");
 }
 
 async function refreshLogs() {

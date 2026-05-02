@@ -14,6 +14,7 @@ import {
   validateState,
   writeMoonBridgeConfig
 } from "./config.js";
+import { runAgentBenchmark } from "./benchmark.js";
 import { fetchMetrics, runDiagnostics, testProvider } from "./diagnostics.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -90,6 +91,14 @@ async function route(req, res) {
     if (url.pathname === "/api/diagnostics/run" && req.method === "POST") {
       const body = await readJSON(req);
       return json(res, await runDiagnostics({
+        baseURL: body.baseURL || state.baseURL,
+        model: body.model || state.config.provider.default_model,
+        authToken: state.config.server?.auth_token ?? ""
+      }));
+    }
+    if (url.pathname === "/api/benchmark/run" && req.method === "POST") {
+      const body = await readJSON(req);
+      return json(res, await runAgentBenchmark({
         baseURL: body.baseURL || state.baseURL,
         model: body.model || state.config.provider.default_model,
         authToken: state.config.server?.auth_token ?? ""

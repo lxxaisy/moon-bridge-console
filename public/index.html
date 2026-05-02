@@ -22,6 +22,7 @@
           <button class="tab" data-tab="routes" type="button">模型路由</button>
           <button class="tab" data-tab="codex" type="button">Codex 同步</button>
           <button class="tab" data-tab="diagnostics" type="button">兼容诊断</button>
+          <button class="tab" data-tab="benchmark" type="button">Agent 基准</button>
           <button class="tab" data-tab="metrics" type="button">请求指标</button>
         </nav>
       </aside>
@@ -153,6 +154,40 @@
           <div id="diagnosticsScore" class="score muted"></div>
           <div id="diagnosticsProfile" class="profile"></div>
           <div id="diagnosticsList" class="list"></div>
+        </section>
+
+        <section id="benchmark" class="panel">
+          <div class="section-head">
+            <h2>Agent 基准</h2>
+            <button id="runBenchmarkButton" class="primary" type="button">运行基准</button>
+          </div>
+          <div class="grid two">
+            <label>
+              <span>模型 alias</span>
+              <select id="benchmarkModel"></select>
+            </label>
+            <label>
+              <span>Base URL</span>
+              <input id="benchmarkBaseURL" />
+            </label>
+          </div>
+          <div id="benchmarkScore" class="score muted"></div>
+          <div id="benchmarkProfile" class="profile"></div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>轮次</th>
+                  <th>类型</th>
+                  <th>工具</th>
+                  <th>结果</th>
+                  <th>详情</th>
+                </tr>
+              </thead>
+              <tbody id="benchmarkTable"></tbody>
+            </table>
+          </div>
+          <pre id="benchmarkWorkspace" class="result"></pre>
         </section>
 
         <section id="metrics" class="panel">

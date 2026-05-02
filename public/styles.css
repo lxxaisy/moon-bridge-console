@@ -382,12 +382,26 @@ td {
   padding: 10px;
   text-align: left;
   font-size: 13px;
+  vertical-align: top;
 }
 
 th {
   background: var(--panel-soft);
   color: var(--muted);
   font-weight: 600;
+}
+
+.table-json {
+  max-width: 440px;
+  max-height: 160px;
+  overflow: auto;
+  margin: 0;
+  white-space: pre-wrap;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font-size: 12px;
 }
 
 .toast {

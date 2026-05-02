@@ -91,6 +91,24 @@ BASE_URL=http://127.0.0.1:38440/v1 MODEL=xiaomi npm run diagnose
 
 For best Codex App results, make an `agent_ready` model your default route. Keep weaker models as explicit secondary aliases instead of the default model.
 
+## Agent Benchmark
+
+Compatibility checks prove the Responses and tool-call contract is shaped correctly. The Agent Benchmark goes one step closer to real Codex usage: it gives the model a tiny in-memory workspace, asks it to inspect files, fix a bug, run tests, and finish only after the test passes.
+
+Run from the UI with the **Agent 基准** tab, or from the command line:
+
+```bash
+BASE_URL=http://127.0.0.1:38440/v1 MODEL=xiaomi npm run benchmark
+```
+
+Benchmark tiers:
+
+- `coding_ready`: model completed read, write, test, and final confirmation
+- `tool_loop_ready`: model can call tools, but did not complete the code task
+- `not_ready`: model is not suitable as the default coding route
+
+Use `coding_ready` as the stronger signal for choosing the default Codex coding model. A model can pass basic compatibility diagnostics and still fail this benchmark.
+
 ## Upstream Compatibility
 
 The console probes Moon Bridge for the dev/v5 management API at `/api/v1/status`. Current stable usage still targets Moon Bridge main/v4 YAML. If Moon Bridge promotes the v5 config/API redesign to `main`, the console should add a v5 config backend instead of replacing the current v4 path abruptly.
