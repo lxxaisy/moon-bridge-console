@@ -1,0 +1,25 @@
+{
+  "name": "moon-bridge-console",
+  "version": "0.1.0",
+  "description": "External local console for configuring and validating Moon Bridge with Codex App.",
+  "type": "module",
+  "bin": {
+    "moon-bridge-console": "./src/server.js"
+  },
+  "scripts": {
+    "start": "node ./src/server.js",
+    "diagnose": "node ./scripts/diagnose.mjs",
+    "test": "node --test",
+    "check": "node --check ./src/server.js && node --check ./src/config.js && node --check ./src/diagnostics.js && node --check ./public/app.js && node --check ./scripts/diagnose.mjs"
+  },
+  "keywords": [
+    "moon-bridge",
+    "codex",
+    "llm"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "yaml": "^2.8.3"
+  }
+}

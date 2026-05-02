@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Moon Bridge Console</title>
+    <link rel="stylesheet" href="/assets/styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="mark">MB</div>
+          <div>
+            <h1>Moon Bridge Console</h1>
+            <p>本地配置与兼容诊断</p>
+          </div>
+        </div>
+        <nav>
+          <button class="tab active" data-tab="overview" type="button">概览</button>
+          <button class="tab" data-tab="providers" type="button">Provider</button>
+          <button class="tab" data-tab="routes" type="button">模型路由</button>
+          <button class="tab" data-tab="codex" type="button">Codex 同步</button>
+          <button class="tab" data-tab="diagnostics" type="button">兼容诊断</button>
+          <button class="tab" data-tab="metrics" type="button">请求指标</button>
+        </nav>
+      </aside>
+
+      <main>
+        <header class="topbar">
+          <div>
+            <span id="healthBadge" class="badge">检测中</span>
+            <span id="activeModel" class="muted"></span>
+          </div>
+          <div class="actions">
+            <button id="refreshButton" type="button">刷新</button>
+            <button id="saveButton" type="button">保存配置</button>
+            <button id="startButton" class="primary" type="button">启动 Moon Bridge</button>
+            <button id="stopButton" type="button">停止</button>
+          </div>
+        </header>
+
+        <section id="overview" class="panel active">
+          <div class="grid two">
+            <label>
+              <span>Moon Bridge 目录</span>
+              <input id="moonBridgeDir" />
+            </label>
+            <label>
+              <span>Moon Bridge binary 可选</span>
+              <input id="moonBridgeBinary" placeholder="留空则 go run ./cmd/moonbridge" />
+            </label>
+            <label>
+              <span>Moon Bridge config.yml</span>
+              <input id="configPath" />
+            </label>
+            <label>
+              <span>监听地址</span>
+              <input id="addr" />
+            </label>
+            <label>
+              <span>Moon Bridge Base URL</span>
+              <input id="baseURL" />
+            </label>
+            <label>
+              <span>Auth Token 可选</span>
+              <input id="authToken" type="password" autocomplete="off" />
+            </label>
+            <label>
+              <span>默认模型 alias</span>
+              <select id="defaultModel"></select>
+            </label>
+            <label>
+              <span>默认最大输出 token</span>
+              <input id="defaultMaxTokens" type="number" min="0" step="1" />
+            </label>
+          </div>
+          <div class="status-grid">
+            <div>
+              <span class="metric-label">进程</span>
+              <strong id="processState">-</strong>
+            </div>
+            <div>
+              <span class="metric-label">模型数量</span>
+              <strong id="modelCount">-</strong>
+            </div>
+            <div>
+              <span class="metric-label">配置文件</span>
+              <strong id="configPathText">-</strong>
+            </div>
+          </div>
+          <pre id="logs" class="log"></pre>
+        </section>
+
+        <section id="providers" class="panel">
+          <div class="section-head">
+            <h2>Provider 配置</h2>
+            <div class="actions">
+              <select id="templateSelect"></select>
+              <button id="addTemplateButton" type="button">添加模板</button>
+              <button id="addProviderButton" type="button">空白 Provider</button>
+            </div>
+          </div>
+          <div id="providerList" class="list"></div>
+        </section>
+
+        <section id="routes" class="panel">
+          <div class="section-head">
+            <h2>模型路由</h2>
+            <button id="addRouteButton" type="button">新增路由</button>
+          </div>
+          <div id="routeList" class="list compact"></div>
+        </section>
+
+        <section id="codex" class="panel">
+          <div class="section-head">
+            <h2>Codex 同步</h2>
+            <button id="syncCodexButton" class="primary" type="button">同步到 Codex</button>
+          </div>
+          <div class="grid two">
+            <label>
+              <span>Codex Home</span>
+              <input id="codexHome" />
+            </label>
+            <label>
+              <span>Codex 使用模型 alias</span>
+              <select id="codexModel"></select>
+            </label>
+          </div>
+          <pre id="codexResult" class="result"></pre>
+        </section>
+
+        <section id="diagnostics" class="panel">
+          <div class="section-head">
+            <h2>兼容诊断</h2>
+            <button id="runDiagnosticsButton" class="primary" type="button">运行诊断</button>
+          </div>
+          <div class="grid two">
+            <label>
+              <span>模型 alias</span>
+              <select id="diagnosticsModel"></select>
+            </label>
+            <label>
+              <span>Base URL</span>
+              <input id="diagnosticsBaseURL" />
+            </label>
+          </div>
+          <div id="diagnosticsScore" class="score muted"></div>
+          <div id="diagnosticsProfile" class="profile"></div>
+          <div id="diagnosticsList" class="list"></div>
+        </section>
+
+        <section id="metrics" class="panel">
+          <div class="section-head">
+            <h2>请求指标</h2>
+            <button id="loadMetricsButton" type="button">加载指标</button>
+          </div>
+          <div class="status-grid">
+            <div>
+              <span class="metric-label">请求</span>
+              <strong id="metricRequests">0</strong>
+            </div>
+            <div>
+              <span class="metric-label">成功/失败</span>
+              <strong id="metricStatus">0 / 0</strong>
+            </div>
+            <div>
+              <span class="metric-label">Tokens</span>
+              <strong id="metricTokens">0</strong>
+            </div>
+            <div>
+              <span class="metric-label">费用</span>
+              <strong id="metricCost">¥0.0000</strong>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>时间</th>
+                  <th>模型</th>
+                  <th>上游</th>
+                  <th>输入</th>
+                  <th>输出</th>
+                  <th>Cache</th>
+                  <th>费用</th>
+                  <th>状态</th>
+                </tr>
+              </thead>
+              <tbody id="metricsTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+    <div id="toast" class="toast"></div>
+    <script type="module" src="/assets/app.js"></script>
+  </body>
+</html>
