@@ -395,6 +395,24 @@ async function loadMetrics() {
   $("metricStatus").textContent = `${summary.success ?? 0} / ${summary.failed ?? 0}`;
   $("metricTokens").textContent = Number((summary.input_tokens ?? 0) + (summary.output_tokens ?? 0)).toLocaleString();
   $("metricCost").textContent = `¥${Number(summary.cost ?? 0).toFixed(4)}`;
+  $("metricSuccessRate").textContent = `${Math.round((summary.success_rate ?? 0) * 100)}%`;
+  $("metricLatency").textContent = `${Math.round(summary.avg_response_time_ms ?? 0)}ms`;
+  $("metricProtocols").textContent = formatTopCounts(summary.protocols ?? []);
+  $("metricActualModels").textContent = formatTopCounts(summary.actual_models ?? []);
+  $("metricUsageSources").textContent = formatCountList(summary.usage_sources ?? []);
+  $("metricErrors").textContent = formatCountList(summary.error_messages ?? []);
+  $("metricRawTokens").textContent = [
+    `input: ${Number(summary.raw_input_tokens ?? 0).toLocaleString()}`,
+    `output: ${Number(summary.raw_output_tokens ?? 0).toLocaleString()}`,
+    `cache_read: ${Number(summary.raw_cache_read ?? 0).toLocaleString()}`,
+    `cache_creation: ${Number(summary.raw_cache_creation ?? 0).toLocaleString()}`
+  ].join("\n");
+  $("metricNormalizedTokens").textContent = [
+    `input: ${Number(summary.normalized_input_tokens ?? 0).toLocaleString()}`,
+    `output: ${Number(summary.normalized_output_tokens ?? 0).toLocaleString()}`,
+    `cache_read: ${Number(summary.normalized_cache_read ?? 0).toLocaleString()}`,
+    `cache_creation: ${Number(summary.normalized_cache_creation ?? 0).toLocaleString()}`
+  ].join("\n");
   $("metricsTable").innerHTML = "";
   for (const record of payload.records ?? []) {
     const row = document.createElement("tr");
@@ -402,6 +420,8 @@ async function loadMetrics() {
       <td>${escapeHTML(record.timestamp ?? "")}</td>
       <td>${escapeHTML(record.model ?? "")}</td>
       <td>${escapeHTML(record.actual_model ?? "")}</td>
+      <td>${escapeHTML(record.protocol ?? "")}</td>
+      <td>${escapeHTML(record.usage_source ?? "")}</td>
       <td>${Number(record.input_tokens ?? 0)}</td>
       <td>${Number(record.output_tokens ?? 0)}</td>
       <td>${Number(record.cache_read ?? 0)}</td>
@@ -579,10 +599,24 @@ function recommendationBadgeClass(category) {
   if (category === "recommended_default" || category === "coding_ready") {
     return "good";
   }
-  if (category === "tool_loop_only" || category === "text_only" || category === "unverified") {
+  if (category === "tool_loop_only" || category === "text_only" || category === "unverified" || category === "agent_non_streaming") {
     return "warn";
   }
   return "bad";
+}
+
+function formatTopCounts(items) {
+  return (items ?? [])
+    .slice(0, 3)
+    .map((item) => `${item.value} (${item.count})`)
+    .join(" · ") || "-";
+}
+
+function formatCountList(items) {
+  return (items ?? [])
+    .slice(0, 8)
+    .map((item) => `${item.value}: ${item.count}`)
+    .join("\n") || "-";
 }
 
 function escapeHTML(value) {

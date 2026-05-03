@@ -57,6 +57,57 @@ test("runDiagnostics reports compatible text, stream, tool call, and round trip"
   }
 });
 
+test("summarizeMetrics includes normalized usage and top counts", async () => {
+  const server = http.createServer(async (req, res) => {
+    if (req.url?.startsWith("/admin/metrics")) {
+      json(res, {
+        records: [
+          {
+            timestamp: "2026-05-03T00:00:00.000Z",
+            model: "moonbridge",
+            actual_model: "kimi-for-coding",
+            protocol: "anthropic",
+            usage_source: "anthropic_stream",
+            input_tokens: 100,
+            output_tokens: 25,
+            cache_read: 40,
+            cache_creation: 10,
+            raw_input_tokens: 110,
+            raw_output_tokens: 25,
+            raw_cache_read: 40,
+            raw_cache_creation: 10,
+            normalized_input_tokens: 100,
+            normalized_output_tokens: 25,
+            normalized_cache_read: 40,
+            normalized_cache_creation: 10,
+            cost: 0.3,
+            response_time: 5_000_000,
+            status: "success"
+          }
+        ],
+        count: 1
+      });
+      return;
+    }
+    res.writeHead(404).end();
+  });
+  await listen(server);
+  try {
+    const payload = await (await import("../src/diagnostics.js")).fetchMetrics({
+      baseURL: `http://127.0.0.1:${server.address().port}`,
+      limit: 10
+    });
+    assert.equal(payload.enabled, true);
+    assert.equal(payload.summary.requests, 1);
+    assert.equal(payload.summary.normalized_input_tokens, 100);
+    assert.equal(payload.summary.raw_input_tokens, 110);
+    assert.equal(payload.summary.protocols[0].value, "anthropic");
+    assert.equal(payload.summary.actual_models[0].value, "kimi-for-coding");
+  } finally {
+    server.close();
+  }
+});
+
 function listen(server) {
   return new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 }

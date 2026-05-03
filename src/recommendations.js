@@ -88,6 +88,9 @@ function categoryFor({ diagnosticTier, benchmarkTier, score }) {
   if (diagnosticTier === "agent_ready" && benchmarkTier === "coding_ready") {
     return "recommended_default";
   }
+  if (diagnosticTier === "agent_non_streaming" && benchmarkTier === "coding_ready") {
+    return "recommended_default";
+  }
   if (benchmarkTier === "coding_ready" && score >= 70) {
     return "coding_ready";
   }
@@ -146,6 +149,9 @@ function categoryLabel(category) {
   }
   if (category === "coding_ready") {
     return "适合代码任务";
+  }
+  if (category === "agent_non_streaming") {
+    return "可用但流式需谨慎";
   }
   if (category === "tool_loop_only") {
     return "工具链需谨慎";

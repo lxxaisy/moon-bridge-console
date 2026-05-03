@@ -1,6 +1,6 @@
 # Moon Bridge Upstream Tracking
 
-Last checked: 2026-05-02
+Last checked: 2026-05-03
 
 ## Current Upstream State
 
@@ -42,6 +42,7 @@ The dev branch is materially different from main:
 - new persistence-backed config store and runtime hot reload path
 - model pricing moves from model metadata to provider offer metadata
 - model metadata becomes shared by slug and providers declare offers for those models
+- `origin/dev` now also includes visual tool-call metrics work and a clearer request metrics path for actual model / protocol / usage-source inspection
 
 ## Console Impact
 
@@ -54,6 +55,13 @@ If dev/v5 is merged into main, the console should add a second config backend:
 - v5 live backend: use `/api/v1` for edits when Moon Bridge is already running
 
 The console now probes `/api/v1/status` and reports whether the v5 management API is available. This keeps the current workflow stable while making the future migration visible.
+
+The console should also mirror the newer observability model:
+
+- show `actual_model`, `protocol`, and `usage_source` in metrics
+- preserve both raw and normalized token counters when available
+- keep the recommendation layer conservative so only well-validated routes become defaults
+- treat `agent_non_streaming` as acceptable only when the benchmark also completes a full coding loop
 
 ## Recommendation
 

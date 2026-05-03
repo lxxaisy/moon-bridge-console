@@ -208,7 +208,7 @@
             <h2>请求指标</h2>
             <button id="loadMetricsButton" type="button">加载指标</button>
           </div>
-          <div class="status-grid">
+          <div class="status-grid metrics-grid">
             <div>
               <span class="metric-label">请求</span>
               <strong id="metricRequests">0</strong>
@@ -225,6 +225,32 @@
               <span class="metric-label">费用</span>
               <strong id="metricCost">¥0.0000</strong>
             </div>
+            <div>
+              <span class="metric-label">成功率</span>
+              <strong id="metricSuccessRate">0%</strong>
+            </div>
+            <div>
+              <span class="metric-label">平均耗时</span>
+              <strong id="metricLatency">0ms</strong>
+            </div>
+            <div>
+              <span class="metric-label">协议</span>
+              <strong id="metricProtocols">-</strong>
+            </div>
+            <div>
+              <span class="metric-label">实际模型</span>
+              <strong id="metricActualModels">-</strong>
+            </div>
+          </div>
+          <div class="grid two metric-details">
+            <div>
+              <span class="metric-label">Usage Source</span>
+              <pre id="metricUsageSources" class="notes compact-notes"></pre>
+            </div>
+            <div>
+              <span class="metric-label">错误摘要</span>
+              <pre id="metricErrors" class="notes compact-notes"></pre>
+            </div>
           </div>
           <div class="table-wrap">
             <table>
@@ -233,6 +259,8 @@
                   <th>时间</th>
                   <th>模型</th>
                   <th>上游</th>
+                  <th>协议</th>
+                  <th>Usage</th>
                   <th>输入</th>
                   <th>输出</th>
                   <th>Cache</th>
@@ -242,6 +270,16 @@
               </thead>
               <tbody id="metricsTable"></tbody>
             </table>
+          </div>
+          <div class="grid two metric-details">
+            <div>
+              <span class="metric-label">原始 Tokens</span>
+              <pre id="metricRawTokens" class="notes compact-notes"></pre>
+            </div>
+            <div>
+              <span class="metric-label">规范化 Tokens</span>
+              <pre id="metricNormalizedTokens" class="notes compact-notes"></pre>
+            </div>
           </div>
         </section>
       </main>

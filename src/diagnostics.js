@@ -471,19 +471,34 @@ function echoTextTool() {
 }
 
 function summarizeMetrics(records) {
-  return records.reduce((summary, record) => {
-    summary.requests += 1;
+  const summary = records.reduce((acc, record) => {
+    acc.requests += 1;
     if (record.status === "success") {
-      summary.success += 1;
+      acc.success += 1;
     } else {
-      summary.failed += 1;
+      acc.failed += 1;
     }
-    summary.input_tokens += Number(record.input_tokens ?? 0);
-    summary.output_tokens += Number(record.output_tokens ?? 0);
-    summary.cache_read += Number(record.cache_read ?? 0);
-    summary.cache_creation += Number(record.cache_creation ?? 0);
-    summary.cost += Number(record.cost ?? 0);
-    return summary;
+    acc.input_tokens += Number(record.input_tokens ?? 0);
+    acc.output_tokens += Number(record.output_tokens ?? 0);
+    acc.cache_read += Number(record.cache_read ?? 0);
+    acc.cache_creation += Number(record.cache_creation ?? 0);
+    acc.raw_input_tokens += Number(record.raw_input_tokens ?? record.input_tokens ?? 0);
+    acc.raw_output_tokens += Number(record.raw_output_tokens ?? record.output_tokens ?? 0);
+    acc.raw_cache_read += Number(record.raw_cache_read ?? record.cache_read ?? 0);
+    acc.raw_cache_creation += Number(record.raw_cache_creation ?? record.cache_creation ?? 0);
+    acc.normalized_input_tokens += Number(record.normalized_input_tokens ?? record.input_tokens ?? 0);
+    acc.normalized_output_tokens += Number(record.normalized_output_tokens ?? record.output_tokens ?? 0);
+    acc.normalized_cache_read += Number(record.normalized_cache_read ?? record.cache_read ?? 0);
+    acc.normalized_cache_creation += Number(record.normalized_cache_creation ?? record.cache_creation ?? 0);
+    acc.response_time_ms += Number(record.response_time ?? 0) / 1_000_000;
+    acc.cost += Number(record.cost ?? 0);
+    bumpCount(acc.protocols, record.protocol ?? "");
+    bumpCount(acc.usage_sources, record.usage_source ?? "");
+    bumpCount(acc.actual_models, record.actual_model || record.model || "");
+    if (record.status !== "success" && (record.error_message ?? "").trim()) {
+      bumpCount(acc.error_messages, record.error_message.trim());
+    }
+    return acc;
   }, {
     requests: 0,
     success: 0,
@@ -492,8 +507,46 @@ function summarizeMetrics(records) {
     output_tokens: 0,
     cache_read: 0,
     cache_creation: 0,
-    cost: 0
+    raw_input_tokens: 0,
+    raw_output_tokens: 0,
+    raw_cache_read: 0,
+    raw_cache_creation: 0,
+    normalized_input_tokens: 0,
+    normalized_output_tokens: 0,
+    normalized_cache_read: 0,
+    normalized_cache_creation: 0,
+    response_time_ms: 0,
+    cost: 0,
+    protocols: {},
+    usage_sources: {},
+    actual_models: {},
+    error_messages: {}
   });
+  const totalCache = summary.normalized_cache_read + summary.normalized_cache_creation;
+  return {
+    ...summary,
+    success_rate: summary.requests > 0 ? summary.success / summary.requests : 0,
+    avg_response_time_ms: summary.requests > 0 ? summary.response_time_ms / summary.requests : 0,
+    cache_hit_rate: totalCache > 0 ? summary.normalized_cache_read / totalCache : 0,
+    protocols: topCounts(summary.protocols),
+    usage_sources: topCounts(summary.usage_sources),
+    actual_models: topCounts(summary.actual_models),
+    error_messages: topCounts(summary.error_messages)
+  };
+}
+
+function bumpCount(map, key) {
+  const value = String(key ?? "").trim();
+  if (!value) {
+    return;
+  }
+  map[value] = (map[value] ?? 0) + 1;
+}
+
+function topCounts(map) {
+  return Object.entries(map)
+    .sort(([, a], [, b]) => b - a)
+    .map(([value, count]) => ({ value, count }));
 }
 
 function authHeaders(authToken) {
