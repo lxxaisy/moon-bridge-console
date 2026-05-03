@@ -124,8 +124,12 @@ function renderRecommendations() {
         <div><span>诊断评分</span><strong>${Number(item.diagnostics?.score ?? 0)}</strong></div>
         <div><span>Agent 基准</span><strong>${escapeHTML(item.benchmark?.label ?? "未运行")}</strong></div>
         <div><span>基准评分</span><strong>${Number(item.benchmark?.score ?? 0)}</strong></div>
+        <div><span>运行成功率</span><strong>${Math.round((item.runtime?.success_rate ?? 0) * 100)}%</strong></div>
+        <div><span>平均耗时</span><strong>${Math.round(item.runtime?.avg_latency_ms ?? 0)}ms</strong></div>
+        <div><span>实际模型</span><strong>${escapeHTML(item.runtime?.actual_models?.[0]?.value ?? "-")}</strong></div>
+        <div><span>Usage Source</span><strong>${escapeHTML(item.runtime?.usage_sources?.[0]?.value ?? "-")}</strong></div>
       </div>
-      <p class="muted small">${item.updatedAt ? `最近验证：${escapeHTML(item.updatedAt)}` : "尚未验证"}</p>
+      <p class="muted small">${item.updatedAt ? `最近验证：${escapeHTML(item.updatedAt)}` : "尚未验证"}${item.runtime?.last_seen ? ` · 最近请求：${escapeHTML(item.runtime.last_seen)}` : ""}</p>
     `;
     $("recommendationList").appendChild(row);
   }
@@ -599,7 +603,7 @@ function recommendationBadgeClass(category) {
   if (category === "recommended_default" || category === "coding_ready") {
     return "good";
   }
-  if (category === "tool_loop_only" || category === "text_only" || category === "unverified" || category === "agent_non_streaming") {
+  if (category === "tool_loop_only" || category === "text_only" || category === "unverified" || category === "agent_non_streaming" || category === "runtime_unstable") {
     return "warn";
   }
   return "bad";
