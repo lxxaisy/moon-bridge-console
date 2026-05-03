@@ -3,7 +3,8 @@ const $ = (id) => document.getElementById(id);
 const state = {
   config: null,
   status: null,
-  recommendations: null
+  recommendations: null,
+  upstream: null
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -42,6 +43,7 @@ async function refreshAll() {
   state.status = await getJSON("/api/status");
   state.config = await getJSON("/api/config");
   state.recommendations = await getJSON("/api/recommendations");
+  state.upstream = await getJSON("/api/upstream");
   renderConfig();
   renderStatus();
   renderRecommendations();
@@ -95,6 +97,13 @@ function renderStatus() {
   const capabilities = state.status?.moonBridge?.capabilities ?? {};
   $("capabilityState").textContent = capabilities.managementAPI ? "v5 API 可用" : "v4 YAML 模式";
   $("capabilityNotes").textContent = (capabilities.notes ?? []).join("\n");
+  const upstream = state.upstream ?? {};
+  $("upstreamVerdict").textContent = upstream.label ?? "-";
+  $("upstreamNotes").textContent = [
+    upstream.status ? `状态: ${upstream.status}` : "",
+    upstream.verdict ? `结论: ${upstream.verdict}` : "",
+    upstream.notes?.length ? upstream.notes.join("\n") : ""
+  ].filter(Boolean).join("\n");
 }
 
 function renderRecommendations() {

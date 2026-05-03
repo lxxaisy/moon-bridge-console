@@ -17,6 +17,7 @@ import {
 import { runAgentBenchmark } from "./benchmark.js";
 import { fetchMetrics, runDiagnostics, testProvider } from "./diagnostics.js";
 import { recommendationsView, recordEvaluation, setDefaultModel } from "./recommendations.js";
+import { probeMoonBridgeUpstream } from "./upstream.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, "..", "public");
@@ -134,6 +135,9 @@ async function route(req, res) {
     }
     if (url.pathname === "/api/logs" && req.method === "GET") {
       return json(res, { logs: moonBridge.logs });
+    }
+    if (url.pathname === "/api/upstream" && req.method === "GET") {
+      return json(res, await probeMoonBridgeUpstream(state.moonBridgeDir || process.cwd()));
     }
     return json(res, { error: "not found" }, 404);
   } catch (error) {
