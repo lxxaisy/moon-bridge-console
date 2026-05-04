@@ -4,7 +4,8 @@ const state = {
   config: null,
   status: null,
   recommendations: null,
-  upstream: null
+  upstream: null,
+  preflight: null
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -39,6 +40,7 @@ function bindActions() {
   $("refreshRecommendationsButton").addEventListener("click", refreshRecommendations);
   $("runPreflightButton").addEventListener("click", runPreflight);
   $("exportReportButton").addEventListener("click", exportReport);
+  $("refreshCapabilitiesButton").addEventListener("click", renderProviderCapabilities);
 }
 
 async function refreshAll() {
@@ -46,9 +48,12 @@ async function refreshAll() {
   state.config = await getJSON("/api/config");
   state.recommendations = await getJSON("/api/recommendations");
   state.upstream = await getJSON("/api/upstream");
+  state.preflight = await getJSON("/api/preflight");
   renderConfig();
   renderStatus();
   renderRecommendations();
+  renderProviderCapabilities();
+  renderPreflight(state.preflight);
   await refreshLogs();
 }
 
@@ -194,6 +199,35 @@ function renderProviders() {
   $("providerList").querySelectorAll("button").forEach((button) => {
     button.addEventListener("click", handleProviderAction);
   });
+}
+
+function renderProviderCapabilities() {
+  const providers = state.config.providers ?? [];
+  $("capabilityList").innerHTML = "";
+  for (const provider of providers) {
+    const row = document.createElement("article");
+    row.className = "item";
+    const summary = providerCapabilityText(provider);
+    row.innerHTML = `
+      <div class="item-head">
+        <div>
+          <h3>${escapeHTML(provider.name)}</h3>
+          <p class="muted">${escapeHTML(provider.protocol || "anthropic")} · ${escapeHTML(provider.base_url || "")}</p>
+        </div>
+        <div class="actions">
+          <span class="badge ${provider.protocol === "openai-response" ? "good" : "good"}">${escapeHTML(summary.protocolLabel)}</span>
+        </div>
+      </div>
+      <div class="profile compact-profile">
+        <div><span>推荐 endpoint</span><strong>${escapeHTML(summary.suggestedBaseURL)}</strong></div>
+        <div><span>Responses</span><strong>${summary.supportsResponses ? "支持" : "不支持"}</strong></div>
+        <div><span>Anthropic</span><strong>${summary.supportsAnthropicMessages ? "支持" : "不支持"}</strong></div>
+        <div><span>Web Search</span><strong>${summary.supportsWebSearch ? "可用" : "跳过"}</strong></div>
+      </div>
+      <p class="muted small">${escapeHTML(summary.notes.join(" "))}</p>
+    `;
+    $("capabilityList").appendChild(row);
+  }
 }
 
 function renderModels(providerIndex, models) {
@@ -530,6 +564,7 @@ async function refreshRecommendations() {
   renderRouteSelects();
   renderStatus();
   renderRecommendations();
+  renderProviderCapabilities();
 }
 
 async function setRecommendedDefault(event) {
@@ -541,6 +576,7 @@ async function setRecommendedDefault(event) {
   renderConfig();
   renderStatus();
   renderRecommendations();
+  renderProviderCapabilities();
   toast(`默认模型已切换为 ${alias}，需要同步 Codex 后生效`);
 }
 
@@ -666,6 +702,33 @@ function preflightBadgeClass(level) {
     return "warn";
   }
   return "bad";
+}
+
+function providerCapabilityText(provider) {
+  const protocol = provider.protocol || "anthropic";
+  const baseURL = provider.base_url || "";
+  const notes = [];
+  if (protocol === "anthropic") {
+    notes.push("适合 Anthropic Messages 路径。");
+    if (/\/v1\/?$/.test(baseURL)) {
+      notes.push("如果这个 /v1 不是 Anthropic 兼容接口，建议改成 /anthropic。");
+    }
+  } else {
+    notes.push("适合 OpenAI Responses 直通。");
+    if (/chat\/completions/.test(baseURL)) {
+      notes.push("chat/completions 不适合作为 responses provider。");
+    }
+  }
+  return {
+    protocolLabel: protocol === "openai-response" ? "OpenAI Responses" : "Anthropic",
+    supportsResponses: protocol === "openai-response",
+    supportsAnthropicMessages: protocol === "anthropic",
+    supportsWebSearch: protocol !== "openai-response",
+    suggestedBaseURL: protocol === "anthropic" && /\/v1\/?$/.test(baseURL)
+      ? baseURL.replace(/\/v1\/?$/, "/anthropic")
+      : baseURL || (protocol === "openai-response" ? "https://your-provider.example.com" : "https://your-provider.example.com/anthropic"),
+    notes
+  };
 }
 
 function formatTopCounts(items) {

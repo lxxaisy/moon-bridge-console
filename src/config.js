@@ -129,6 +129,22 @@ const DEFAULT_STATE = {
 
 export const PROVIDER_TEMPLATES = [
   {
+    id: "custom-anthropic",
+    name: "Custom Anthropic",
+    provider: "custom",
+    protocol: "anthropic",
+    base_url: "https://your-provider.example.com/anthropic",
+    model: "your-model"
+  },
+  {
+    id: "custom-openai-response",
+    name: "Custom OpenAI Responses",
+    provider: "custom",
+    protocol: "openai-response",
+    base_url: "https://your-provider.example.com",
+    model: "your-model"
+  },
+  {
     id: "xiaomi-token-plan",
     name: "Xiaomi Token Plan",
     provider: "xiaomi",
@@ -286,6 +302,19 @@ export function makeProviderFromTemplate(templateID, apiKey = "") {
         cache_read_price: 0
       }
     ]
+  };
+}
+
+export function providerCapabilitySummary(provider) {
+  const protocol = provider.protocol || "anthropic";
+  return {
+    protocol,
+    baseURL: provider.base_url ?? "",
+    supportsResponses: protocol === "openai-response",
+    supportsAnthropicMessages: protocol === "anthropic",
+    supportsWebSearch: protocol !== "openai-response",
+    suggestedBaseURL: suggestedBaseURLFor(provider),
+    suggestedNotes: suggestedProviderNotes(provider)
   };
 }
 
@@ -543,4 +572,31 @@ function normalizeModalities(value) {
     .map((item) => item.trim())
     .filter(Boolean);
   return out.length > 0 ? out : ["text"];
+}
+
+function suggestedBaseURLFor(provider) {
+  const baseURL = String(provider.base_url ?? "");
+  const protocol = provider.protocol || "anthropic";
+  if (!baseURL) {
+    return protocol === "openai-response" ? "https://your-provider.example.com" : "https://your-provider.example.com/anthropic";
+  }
+  if (protocol === "anthropic" && /\/v1\/?$/.test(baseURL)) {
+    return baseURL.replace(/\/v1\/?$/, "/anthropic");
+  }
+  return baseURL;
+}
+
+function suggestedProviderNotes(provider) {
+  const protocol = provider.protocol || "anthropic";
+  const baseURL = String(provider.base_url ?? "");
+  const notes = [];
+  if (protocol === "anthropic") {
+    notes.push("Anthropic protocol should point at an Anthropic-compatible /v1/messages endpoint.");
+    if (/\/v1\/?$/.test(baseURL)) {
+      notes.push("If the provider only exposes /v1, verify it is actually Anthropic-compatible before saving.");
+    }
+  } else if (protocol === "openai-response") {
+    notes.push("openai-response requires /v1/responses compatibility, not chat/completions.");
+  }
+  return notes;
 }

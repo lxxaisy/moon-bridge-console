@@ -1,4 +1,5 @@
 import { recommendationsView } from "./recommendations.js";
+import { providerCapabilitySummary } from "./config.js";
 
 export function preflightReport({ state, status = null, upstream = null, metrics = null }) {
   const config = state.config ?? {};
@@ -98,6 +99,8 @@ function providerChecks(state) {
     if (!provider.api_key) {
       out.push(warn(`provider_${name}_key`, `Provider ${name}`, "API key 未配置，启动后该 provider 无法访问上游。"));
     }
+    const capability = providerCapabilitySummary(provider);
+    out.push(pass(`provider_${name}_summary`, `Provider ${name} 能力`, capability.suggestedNotes.join(" ")));
     out.push(endpointCheck(name, provider));
   }
   return out;
