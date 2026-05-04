@@ -96,6 +96,10 @@ function providerChecks(state) {
   const providers = state.config?.provider?.providers ?? {};
   const out = [];
   for (const [name, provider] of Object.entries(providers)) {
+    if (!provider.base_url) {
+      out.push(fail(`provider_${name}_base_url`, `Provider ${name} base_url`, "base_url 未配置。"));
+      continue;
+    }
     if (!provider.api_key) {
       out.push(warn(`provider_${name}_key`, `Provider ${name}`, "API key 未配置，启动后该 provider 无法访问上游。"));
     }
@@ -109,6 +113,9 @@ function providerChecks(state) {
 function endpointCheck(name, provider) {
   const baseURL = String(provider.base_url ?? "");
   const protocol = provider.protocol || "anthropic";
+  if (!baseURL) {
+    return fail(`provider_${name}_endpoint`, `Provider ${name} endpoint`, "base_url 未配置。");
+  }
   if (protocol === "anthropic") {
     if (/\/v1\/?$/.test(baseURL) || /chat\/completions/.test(baseURL)) {
       return fail(`provider_${name}_endpoint`, `Provider ${name} endpoint`, "Anthropic 协议不应填写 OpenAI /v1 或 chat/completions endpoint。");

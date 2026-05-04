@@ -148,6 +148,9 @@ async function route(req, res) {
       res.writeHead(200, { "content-type": "text/markdown; charset=utf-8" });
       return res.end(reportMarkdown(report));
     }
+    if (url.pathname === "/api/report.json" && req.method === "GET") {
+      return json(res, await buildPreflightReport());
+    }
     return json(res, { error: "not found" }, 404);
   } catch (error) {
     return json(res, { error: error.message || String(error) }, 400);

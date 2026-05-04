@@ -40,6 +40,7 @@ function bindActions() {
   $("refreshRecommendationsButton").addEventListener("click", refreshRecommendations);
   $("runPreflightButton").addEventListener("click", runPreflight);
   $("exportReportButton").addEventListener("click", exportReport);
+  $("exportReportJsonButton").addEventListener("click", exportReportJSON);
   $("refreshCapabilitiesButton").addEventListener("click", renderProviderCapabilities);
 }
 
@@ -400,6 +401,12 @@ async function exportReport() {
   }
   $("reportPreview").textContent = text;
   toast("报告已生成");
+}
+
+async function exportReportJSON() {
+  const report = await getJSON("/api/report.json");
+  $("reportPreview").textContent = JSON.stringify(report, null, 2);
+  toast("JSON 报告已生成");
 }
 
 async function stopMoonBridge() {

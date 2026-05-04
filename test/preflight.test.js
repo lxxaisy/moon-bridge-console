@@ -45,3 +45,17 @@ test("reportMarkdown renders a shareable summary", () => {
   assert.match(markdown, /Moon Bridge Console Report/);
   assert.match(markdown, /Default Model: xiaomi/);
 });
+
+test("preflightReport fails when a provider base_url is missing", () => {
+  const state = cloneDefaultState();
+  state.config.provider.providers.xiaomi.base_url = "";
+
+  const report = preflightReport({
+    state,
+    status: null,
+    upstream: null,
+    metrics: null
+  });
+
+  assert.ok(report.checks.some((item) => item.id === "provider_xiaomi_base_url" && item.level === "fail"));
+});
