@@ -18,6 +18,7 @@
         </div>
         <nav>
           <button class="tab active" data-tab="overview" type="button">概览</button>
+          <button class="tab" data-tab="preflight" type="button">预检报告</button>
           <button class="tab" data-tab="recommendations" type="button">模型推荐</button>
           <button class="tab" data-tab="providers" type="button">Provider</button>
           <button class="tab" data-tab="routes" type="button">模型路由</button>
@@ -102,6 +103,39 @@
           <pre id="capabilityNotes" class="notes"></pre>
           <pre id="upstreamNotes" class="notes"></pre>
           <pre id="logs" class="log"></pre>
+        </section>
+
+        <section id="preflight" class="panel">
+          <div class="section-head">
+            <div>
+              <h2>预检报告</h2>
+              <p class="muted">启动、同步和推广前的配置检查。</p>
+            </div>
+            <div class="actions">
+              <button id="runPreflightButton" type="button">运行预检</button>
+              <button id="exportReportButton" type="button">导出报告</button>
+            </div>
+          </div>
+          <div class="status-grid">
+            <div>
+              <span class="metric-label">状态</span>
+              <strong id="preflightStatus">-</strong>
+            </div>
+            <div>
+              <span class="metric-label">通过</span>
+              <strong id="preflightPass">0</strong>
+            </div>
+            <div>
+              <span class="metric-label">警告</span>
+              <strong id="preflightWarn">0</strong>
+            </div>
+            <div>
+              <span class="metric-label">失败</span>
+              <strong id="preflightFail">0</strong>
+            </div>
+          </div>
+          <div id="preflightList" class="list"></div>
+          <pre id="reportPreview" class="result"></pre>
         </section>
 
         <section id="recommendations" class="panel">

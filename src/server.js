@@ -16,6 +16,7 @@ import {
 } from "./config.js";
 import { runAgentBenchmark } from "./benchmark.js";
 import { fetchMetrics, runDiagnostics, testProvider } from "./diagnostics.js";
+import { preflightReport, reportMarkdown } from "./preflight.js";
 import { recommendationsView, recordEvaluation, setDefaultModel } from "./recommendations.js";
 import { probeMoonBridgeUpstream } from "./upstream.js";
 
@@ -139,10 +140,34 @@ async function route(req, res) {
     if (url.pathname === "/api/upstream" && req.method === "GET") {
       return json(res, await probeMoonBridgeUpstream(state.moonBridgeDir || process.cwd()));
     }
+    if (url.pathname === "/api/preflight" && req.method === "GET") {
+      return json(res, await buildPreflightReport());
+    }
+    if (url.pathname === "/api/report" && req.method === "GET") {
+      const report = await buildPreflightReport();
+      res.writeHead(200, { "content-type": "text/markdown; charset=utf-8" });
+      return res.end(reportMarkdown(report));
+    }
     return json(res, { error: "not found" }, 404);
   } catch (error) {
     return json(res, { error: error.message || String(error) }, 400);
   }
+}
+
+async function buildPreflightReport() {
+  const metrics = await fetchMetrics({
+    baseURL: state.baseURL,
+    authToken: state.config.server?.auth_token ?? "",
+    limit: 100
+  });
+  state.metrics = metrics.enabled ? { records: metrics.records } : state.metrics;
+  const upstream = await probeMoonBridgeUpstream(state.moonBridgeDir || process.cwd());
+  return preflightReport({
+    state,
+    status: await statusPayload(),
+    upstream,
+    metrics
+  });
 }
 
 async function statusPayload() {

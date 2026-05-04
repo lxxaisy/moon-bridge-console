@@ -37,6 +37,8 @@ function bindActions() {
   $("runBenchmarkButton").addEventListener("click", runBenchmark);
   $("loadMetricsButton").addEventListener("click", loadMetrics);
   $("refreshRecommendationsButton").addEventListener("click", refreshRecommendations);
+  $("runPreflightButton").addEventListener("click", runPreflight);
+  $("exportReportButton").addEventListener("click", exportReport);
 }
 
 async function refreshAll() {
@@ -328,6 +330,44 @@ async function startMoonBridge() {
   await refreshAll();
 }
 
+async function runPreflight() {
+  const report = await getJSON("/api/preflight");
+  renderPreflight(report);
+  toast("预检完成");
+}
+
+function renderPreflight(report) {
+  $("preflightStatus").textContent = report.summary?.status ?? "-";
+  $("preflightPass").textContent = report.summary?.pass ?? 0;
+  $("preflightWarn").textContent = report.summary?.warn ?? 0;
+  $("preflightFail").textContent = report.summary?.fail ?? 0;
+  $("preflightList").innerHTML = "";
+  for (const check of report.checks ?? []) {
+    const item = document.createElement("article");
+    item.className = "item";
+    item.innerHTML = `
+      <div class="item-head">
+        <div>
+          <h3>${escapeHTML(check.title)}</h3>
+          <p class="muted">${escapeHTML(check.message)}</p>
+        </div>
+        <span class="badge ${preflightBadgeClass(check.level)}">${escapeHTML(check.level)}</span>
+      </div>
+    `;
+    $("preflightList").appendChild(item);
+  }
+}
+
+async function exportReport() {
+  const response = await fetch("/api/report");
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(text || `HTTP ${response.status}`);
+  }
+  $("reportPreview").textContent = text;
+  toast("报告已生成");
+}
+
 async function stopMoonBridge() {
   const result = await postJSON("/api/moonbridge/stop", {});
   toast(result.message || "Moon Bridge 已停止");
@@ -613,6 +653,16 @@ function recommendationBadgeClass(category) {
     return "good";
   }
   if (category === "tool_loop_only" || category === "text_only" || category === "unverified" || category === "agent_non_streaming" || category === "runtime_unstable") {
+    return "warn";
+  }
+  return "bad";
+}
+
+function preflightBadgeClass(level) {
+  if (level === "pass") {
+    return "good";
+  }
+  if (level === "warn") {
     return "warn";
   }
   return "bad";
